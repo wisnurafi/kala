@@ -34,7 +34,7 @@ _LEAK_HEADER = re.compile(r"ERROR: LeakSanitizer: detected memory leaks")
 _ACCESS = re.compile(r"\b(READ|WRITE) of size (\d+)")
 _SEGV_ACCESS = re.compile(r"caused by a (READ|WRITE) memory access")
 _UBSAN = re.compile(r"^(.+?):(\d+):(\d+): runtime error: (.*)$", re.M)
-_FRAME = re.compile(r"^\s+#\d+\s+0x[0-9a-f]+\s+(.*)$", re.M)
+_FRAME = re.compile(r"^\s+#(\d+)\s+0x[0-9a-f]+\s+(.*)$", re.M)
 _FRAME_LOC = re.compile(r"(\S+?\.(?:c|cc|cpp|cxx|h|hpp)):(\d+)")
 
 
@@ -92,9 +92,22 @@ class CrashInfo:
 
 
 def parse_frames(output: str) -> list[Frame]:
+    """Frames of the FIRST stack trace in the output.
+
+    Sanitizer reports contain auxiliary stacks ("allocated by",
+    "freed by", "previously allocated by") after the crash stack.
+    They describe other code paths entirely; including them poisons
+    both the reported location and the stack hash, so parsing stops
+    when the frame numbering restarts.
+    """
     frames = []
+    prev_idx = -1
     for m in _FRAME.finditer(output):
-        rest = m.group(1)
+        idx = int(m.group(1))
+        if idx <= prev_idx:
+            break
+        prev_idx = idx
+        rest = m.group(2)
         function = None
         file = None
         line = None
@@ -139,6 +152,13 @@ def parse_sanitizer_output(output: str, exit_code: int,
     excerpt = _excerpt(output)
 
     if timed_out:
+        return CrashInfo("timeout", "timeout", "timeout", None, None,
+                         frames, symbolized, excerpt)
+
+    if "ERROR: libFuzzer: out-of-memory" in output:
+        return CrashInfo("oom", "oom", "oom", None, None,
+                         frames, symbolized, excerpt)
+    if "ERROR: libFuzzer: timeout after" in output:
         return CrashInfo("timeout", "timeout", "timeout", None, None,
                          frames, symbolized, excerpt)
 

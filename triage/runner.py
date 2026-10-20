@@ -58,19 +58,32 @@ class ReplayResult:
 
 def replay(binary: str | Path, crash_file: str | Path, timeout: float,
            env: dict[str, str]) -> ReplayResult:
+    """Replay one input with a hard timeout.
+
+    The child runs in its own session so a timeout can kill the
+    whole process group; if it still does not reap within a grace
+    period (e.g. stuck in uninterruptible I/O), the replay is
+    abandoned and reported as a timeout rather than hanging the
+    whole triage/campaign on one pathological input.
+    """
+    import os
+    import signal
+
+    proc = subprocess.Popen(
+        [str(binary), str(crash_file)],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        env=env, errors="replace", start_new_session=True)
     try:
-        proc = subprocess.run(
-            [str(binary), str(crash_file)],
-            capture_output=True, text=True, timeout=timeout, env=env,
-            errors="replace",
-        )
-        return ReplayResult(proc.returncode,
-                            (proc.stdout or "") + (proc.stderr or ""),
+        out, err = proc.communicate(timeout=timeout)
+        return ReplayResult(proc.returncode, (out or "") + (err or ""),
                             False)
-    except subprocess.TimeoutExpired as exc:
-        out = ""
-        for chunk in (exc.stdout, exc.stderr):
-            if chunk:
-                out += chunk.decode(errors="replace") \
-                    if isinstance(chunk, bytes) else chunk
-        return ReplayResult(-1, out, True)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+        try:
+            out, err = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        return ReplayResult(-1, (out or "") + (err or ""), True)

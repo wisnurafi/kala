@@ -105,9 +105,30 @@ class TestClassify(unittest.TestCase):
         self.assertIn("0xADDR", info.excerpt)
         self.assertIn("copy_rows", info.excerpt)
 
+    def test_auxiliary_stacks_do_not_pollute_location(self):
+        # ASan prints "allocated by" stacks after the crash stack;
+        # only the first stack describes the crash.
+        out = HBO_READ + """
+0x508000000076 is located 0 bytes after a 118-byte region
+allocated by thread T0 here:
+    #0 0xeee in __asan_malloc (/bin/bmp_fuzzer+0x1)
+    #1 0xfff in parse_palette /src/targets/bmp_parser/bmp_parser.c:33:5
+"""
+        info = parse_sanitizer_output(out, exit_code=1)
+        self.assertEqual(info.location.function, "copy_rows")
+        funcs = [fr.function for fr in info.app_frames]
+        self.assertNotIn("parse_palette", funcs)
+
     def test_no_crash(self):
         info = parse_sanitizer_output("parsed ok\n", exit_code=0)
         self.assertEqual(info.kind, "no-crash")
+
+    def test_libfuzzer_oom_message(self):
+        out = ("INFO: Running with entropic power schedule\n"
+               "ERROR: libFuzzer: out-of-memory (used: 2049Mb; limit: "
+               "2048Mb)\n")
+        info = parse_sanitizer_output(out, exit_code=1)
+        self.assertEqual(info.bug_class, "oom")
 
     def test_timeout(self):
         info = parse_sanitizer_output("", exit_code=-9, timed_out=True)
