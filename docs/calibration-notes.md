@@ -263,3 +263,33 @@ fuzzing VM, per the Phase 4 definition of done.
    and per-machine tool availability is a calibration variable —
    the same `shutil.which` probe silently routes different
    machines down different code paths.
+
+## Phase 5 — first public target: tomlc17 (hunt open)
+
+Public target chosen by the maintainer from the Phase 4 shortlist:
+**tomlc17** (cktan/tomlc17, TOML v1.1 parser in C, MIT), vendored at
+`85000d08` ("Reject invalid table redefinitions via dotted keys and
+headers (#59)", 2026-10-18; no release tags exist, so the commit
+hash is the pin). Vendored files verified byte-identical to upstream
+by git blob SHA-1 (all three match). Checked on the pin: no
+`SECURITY.md` (root or `.github/`), no upstream fuzz harness, not in
+OSS-Fuzz — disclosure runs per `docs/responsible-disclosure.md` via
+the maintainer on GitHub, privately first.
+
+Configuration: upstream defaults (no defines, `check_utf8` off) —
+what an embedder gets by dropping the two files in. Harness feeds
+`toml_parse()`, walks the result tree ITERATIVELY (the library's own
+teardown/query paths are recursive; the harness refuses to be the
+recursion that crashes), runs two fixed `toml_seek()` lookups, and
+calls `toml_free()` on every result.
+
+Smoke (container, clang 18, 120 s, 2-min dictionary run): seed
+replay alone reaches cov 351 / ft 595 from 5 hand-written seeds;
+the run completes **clean — 4,340,595 executions, 0 artifacts,
+coverage 351 → 432+ (features 595 → 1441+ by the last recorded pulse)**. Baseline suites stay
+green: triage 34, orchestrate 10, regression replay 5/5.
+
+Remaining gate: the 48-hour campaign on the fuzzing VM
+(`examples/campaign-tomlc17.yaml`, resumable), not to be stacked
+full-jobs with the still-accumulating inih 24-hour campaign on the
+same VM. M5 is done when one valid report is accepted upstream.

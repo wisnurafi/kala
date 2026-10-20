@@ -11,18 +11,14 @@ deduplicated, minimized, classified reports.
 
 ## Status
 
-Phase 4 — hardening complete: GitHub Actions CI builds the fuzzer
-preset, runs the Python unit tests, and replays every regression
-PoC on each push (plus a weekly fuzz smoke); confirmed crashes are
-promoted into the regression corpus with `kala regress` and checked
-by `tools/check_regression.py`. The Phase 3 follow-ups are fixed:
-campaign reports reconcile every state group (reproduced or marked
-NOT REPRODUCED), slices fuzz with symbolization off for throughput,
-and triage normalizes inlined accessor frames. First private real
-target vendored: inih (`targets/inih`, pinned commit) in the heap
-line-buffer configuration — smoke campaign clean (8.8M executions,
-coverage up); the 24-hour validation campaign is the remaining
-Phase 4 gate, run on the fuzzing VM. Docs: `docs/setup.md`,
+Phase 5 — the hunt is open: first public target vendored,
+tomlc17 (`targets/tomlc17`, pinned commit, upstream default
+configuration) — smoke campaign clean (4.3M executions, coverage
+up); the 48-hour hunt campaign runs on the fuzzing VM, and one
+valid report accepted by the maintainer closes M5. Phase 4
+hardening is complete (CI, regression lab, report reconciliation);
+its 24-hour inih validation campaign is still accumulating on the
+VM as that phase's remaining gate. Docs: `docs/setup.md`,
 `docs/harness-writing.md`, `docs/triage-guide.md`,
 `docs/responsible-disclosure.md`. See `docs/calibration-notes.md`.
 
