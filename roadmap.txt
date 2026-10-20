@@ -1,0 +1,75 @@
+Kala Roadmap / Structure Overview
+
+Status (2026-10-20)
+- The toolkit is COMPLETE and in operation. All planned components
+  are built, tested and in use: harness layer, triage pipeline,
+  campaign orchestration, regression lab and CI.
+- What runs now is not development but hunting: two long campaigns
+  execute on the fuzzing VM (inih validation, 24h budget; tomlc17
+  public hunt, 48h budget), both resumable and accumulated in
+  slices. Findings, when they come, follow
+  docs/responsible-disclosure.md.
+- Future work is driven by findings and by new targets, not by a
+  feature roadmap: expect new vendored targets, deeper campaigns
+  and disclosure write-ups — plus bug fixes as campaigns surface
+  them.
+
+Goal of this file
+- Keep this as a practical map of the codebase.
+- Show main folders and important files only (not every file).
+
+Root
+- README.md               -> project overview, quick start, usage
+- LICENSE                 -> MIT license (wisnurafi)
+- CONTRIBUTING.md         -> contributor guide and hard rules
+- SECURITY.md             -> how to report vulnerabilities in Kala
+- roadmap.txt             -> this file
+- CMakeLists.txt          -> build root: C11/C++17, sanitizer profiles
+- CMakePresets.json       -> presets: asan, asan-ubsan, fuzzer-asan-ubsan
+- kala                    -> CLI entry point (triage / run / status / regress)
+
+harness/
+- libfuzzer/              -> one harness per target (LLVMFuzzerTestOneInput)
+- aflpp/                  -> AFL++ harness conventions (libFuzzer is the
+                             shipped engine; AFL++ plugs in per target)
+- sanitizers/             -> CMake profiles: asan, asan-ubsan, msan
+- dicts/                  -> token dictionaries per format (hello/bmp/ini/toml)
+
+targets/
+- bmp_parser/             -> practice target in C, 5 planted bug classes,
+                             the calibration ground truth (PLANTED_BUGS.md)
+- inih/                   -> vendored benhoyt/inih at 2bbdec4 (BSD-3),
+                             heap line-buffer configuration
+- tomlc17/                -> vendored cktan/tomlc17 at 85000d0 (MIT),
+                             TOML v1.1 parser, upstream defaults
+
+corpus/
+- hello/ bmp/ inih/ tomlc17/   -> hand-written valid seed corpora
+- regression/             -> fuzzer-found PoCs that became permanent
+                             regression tests (replayed by CI)
+
+triage/                   -> Python (stdlib only): ingest -> replay ->
+                             classify -> dedup -> minimize -> HTML report
+orchestrate/              -> Python (stdlib only): campaign engine —
+                             slices, scheduler, persistent state, resume,
+                             automatic triage on finish
+examples/                 -> ready-to-run campaign configs (YAML)
+tools/                    -> check_regression.py (CI regression replay)
+docker/                   -> reproducible fuzzing image (VM alternative)
+docs/
+- setup.md                -> VM/Docker environment setup
+- harness-writing.md      -> how to write a harness that tells the truth
+- triage-guide.md         -> reading and trusting triage reports
+- responsible-disclosure.md -> the disclosure SOP (90-day embargo)
+- calibration-notes.md    -> the development & calibration log: how each
+                             component was validated, with the numbers
+
+Development record (all complete)
+- M0 Scaffold + hello harness, fuzzed end to end
+- M1 Calibration: 5/5 planted bugs in bmp_parser found by the fuzzer
+- M2 Triage: 590 raw crashes -> exactly 5 correct groups, idempotent report
+- M3 Orchestration: unattended campaigns, interrupt/resume proven
+- M4 Hardening: regression lab, CI on every push, symbolizer fixes,
+     first real target (inih) vendored and smoking clean
+- M5 Hunting: public target tomlc17 vendored; 48h campaign running.
+     Closes with the first valid report accepted by a maintainer.
