@@ -49,3 +49,6 @@ Thumbs.db
 # Local secrets / env
 .env
 *.local
+
+# Triage scratch output
+triage-work/
