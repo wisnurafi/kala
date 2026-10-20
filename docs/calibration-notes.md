@@ -180,3 +180,67 @@ Results:
    faithfully inherits that. The engine was correct; the test
    needed `env --default-signal=INT` to reproduce a real Ctrl+C.
    Check the harness before auditing the product (again).
+
+## Phase 4 — hardening, regression lab, first private target
+
+Three Phase 3 follow-ups closed:
+
+- **Report/state reconciliation.** Campaign `_triage()` replayed
+  only the representatives that still crashed and rendered only
+  those groups; in the Phase 3 VM QA that silently dropped 2 of 3
+  state groups (a timeout representative and a heap-layout-dependent
+  palette read). Reports now carry a reconciliation section listing
+  every `state.json` group with its reproduction status. Verified
+  both ways in a 30 s smoke campaign (6 groups, all reproduced, all
+  hashes present in the report) and by corrupting one
+  representative into a benign input (its group renders
+  NOT REPRODUCED; restored, it disappears).
+- **Symbolization off during slices.** Each symbolized crash spawns
+  an external symbolizer process; on the QA VM that cost dominated.
+  Slices now run through `fuzz_env()` (`symbolize=0`, no external
+  symbolizer, UBSan stack traces off; `symbolize_slices: true`
+  opts back in), while harvest/triage replay fully symbolized.
+  Verified on the bug-1 PoC: both environments crash (exit −6),
+  only the replay environment produces frames.
+- **Inline-helper normalization.** `get_u32le` and friends are
+  skipped when computing location and stack hash, so attribution
+  no longer depends on a compiler's inlining choices. Bug 1's hash
+  stayed `c75583a009ff` across the change and across campaigns.
+
+Regression lab: `kala regress` promotes a PoC only after a replay
+proves the documented class (and top function); it refuses
+non-crashing, mislabeled and byte-duplicate inputs, copies the
+file into `corpus/regression/<target>/` and appends the README
+row. `tools/check_regression.py` is the machine side: 5/5 PoCs
+reproduce as documented against a fresh preset build. CI
+(`.github/workflows/ci.yml`) runs the preset build, both unit
+suites (triage 28, orchestrate 10 at this writing), the
+portability grep and the regression replay on every push, plus a
+weekly 120 s fuzz smoke with automatic triage.
+
+Private target: **inih** (benhoyt/inih, vendored at `2bbdec4`,
+BSD-3), configured `INI_USE_STACK=0` + `INI_ALLOW_REALLOC=1` — the
+heap line-buffer path. Harness feeds `ini_parse_string_length()`;
+handler stores nothing. Smoke campaign (3 min, 2 jobs): **clean —
+8,817,559 executions, 0 artifacts, coverage 63 → 75 (features
+127 → 493)** on job 0. Remaining gate: the 24-hour campaign on the
+fuzzing VM, per the Phase 4 definition of done.
+
+### Lessons
+
+1. **A clean campaign with 0 executions is not clean — it is
+   broken.** The first inih smoke "completed" with 0 artifacts
+   *and 0 executions*: `ini.dict` used `\r`/`\n`/`\t` escapes,
+   libFuzzer's dictionary parser rejects those (only `\\`, `\"`,
+   `\xNN`), and every fuzzer process exited at startup — the slice
+   loop restarted it thousands of times (1000+ run logs for one
+   slice) and the harvest faithfully reported nothing. The
+   tell was the exec counter. Dictionaries use `\xNN` for every
+   non-printable byte, and a campaign's summed execs are a health
+   signal, not a vanity metric: 0 execs = audit the harness first.
+2. **`clang` the package is not the fuzzing toolchain.** A fresh
+   `apt install clang` lacks the compiler-rt archives
+   (`libclang_rt.fuzzer/asan`), so linking a libFuzzer binary
+   fails. CI installs `libclang-rt-dev` alongside clang — found by
+   rebuilding from an empty build directory locally, not by
+   reading package descriptions.

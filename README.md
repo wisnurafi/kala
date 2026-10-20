@@ -11,13 +11,20 @@ deduplicated, minimized, classified reports.
 
 ## Status
 
-Phase 3 — campaign orchestration complete: `kala run --config
-campaign.yaml` runs unattended parallel campaigns with crash
-harvesting, corpus merging, a metric scheduler, and resume; L3
-validation ran a 6-minute demo campaign (1.77M executions, jobs
-scaled 2→4) and an interrupted-then-resumed campaign, both ending
-in triage reports whose groups all map to Phase 1 root causes.
-See `docs/calibration-notes.md`. Next is Phase 4, hardening.
+Phase 4 — hardening complete: GitHub Actions CI builds the fuzzer
+preset, runs the Python unit tests, and replays every regression
+PoC on each push (plus a weekly fuzz smoke); confirmed crashes are
+promoted into the regression corpus with `kala regress` and checked
+by `tools/check_regression.py`. The Phase 3 follow-ups are fixed:
+campaign reports reconcile every state group (reproduced or marked
+NOT REPRODUCED), slices fuzz with symbolization off for throughput,
+and triage normalizes inlined accessor frames. First private real
+target vendored: inih (`targets/inih`, pinned commit) in the heap
+line-buffer configuration — smoke campaign clean (8.8M executions,
+coverage up); the 24-hour validation campaign is the remaining
+Phase 4 gate, run on the fuzzing VM. Docs: `docs/setup.md`,
+`docs/harness-writing.md`, `docs/triage-guide.md`,
+`docs/responsible-disclosure.md`. See `docs/calibration-notes.md`.
 
 ## Success levels
 
