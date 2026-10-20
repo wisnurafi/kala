@@ -9,8 +9,6 @@
                 --expect-class <class> [--expect-function <fn>]
                 --bug "..." --expected "..." --trigger "..."
 
-`triage` is Phase 2; `run`/`status` drive Phase 3 campaigns.
-
 Standard library only; paths via pathlib, subprocess via argument
 lists (roadmap section 9).
 """

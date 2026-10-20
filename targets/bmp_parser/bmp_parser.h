@@ -9,9 +9,9 @@ extern "C" {
 
 // Minimal BMP parser (BITMAPINFOHEADER / V4 / V5 layouts, uncompressed
 // and RLE8). Written as a calibration target for the Kala pipeline:
-// it is functional for well-formed files, and it is the Phase 1
-// practice target (see PLANTED_BUGS.md, which is the answer key and
-// must not be consulted during triage validation).
+// it is functional for well-formed files, and it is the practice
+// target (see PLANTED_BUGS.md, which is the answer key and must not
+// be consulted during triage validation).
 typedef struct {
   int32_t width;
   int32_t height; // negative for top-down files, as stored in the header

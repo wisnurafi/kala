@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Replay every regression PoC and check its documented report.
 
-This is the regression lab's contract (Phase 4): each PoC in
+This is the regression lab's contract: each PoC in
 corpus/regression/<target>/ must still crash with the bug class —
 and, where the sanitizer trace names one, the top function — that
 its README row documents. A PoC that stops crashing, or crashes

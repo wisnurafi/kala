@@ -8,7 +8,7 @@ root, not the config file's directory, so examples/ configs can
 reference corpus/bmp etc. directly.
 
 Standard library only (PyYAML is an optional accelerator, per the
-Phase 2 zero-dependency rule).
+the zero-dependency rule).
 """
 
 from dataclasses import dataclass, field

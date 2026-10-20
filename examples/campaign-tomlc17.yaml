@@ -1,4 +1,4 @@
-# Kala campaign: tomlc17 public hunt (Phase 5, milestone M5).
+# Kala campaign: tomlc17 public hunt.
 # 48 hours, resumable, on the fuzzing VM. A genuine crash or a
 # complete clean run closes the hunt; findings follow
 # docs/responsible-disclosure.md and unpatched PoCs never enter the
