@@ -1,0 +1,42 @@
+# Dictionary for BMP targets (libFuzzer -dict format, AFL++ compatible).
+# Magic and structural fields first, then generic integer boundary
+# values — the standard tokens dimension/size fields are stress-tested
+# with in format fuzzing.
+
+# File signature
+magic_bm="BM"
+magic_ba="BA"
+magic_ci="CI"
+
+# DIB header sizes: CORE(12), INFO(40), V4(108), V5(124)
+dib_12="\x0c\x00\x00\x00"
+dib_40="\x28\x00\x00\x00"
+dib_108="\x6c\x00\x00\x00"
+dib_124="\x7c\x00\x00\x00"
+
+# Common header field values (little-endian)
+planes_1="\x01\x00"
+bpp_8="\x08\x00"
+bpp_16="\x10\x00"
+bpp_24="\x18\x00"
+bpp_32="\x20\x00"
+comp_rgb="\x00\x00\x00\x00"
+comp_rle8="\x01\x00\x00\x00"
+comp_rle4="\x02\x00\x00\x00"
+colors_16="\x10\x00\x00\x00"
+colors_256="\x00\x01\x00\x00"
+offset_54="\x36\x00\x00\x00"
+rle_eob="\x00\x01"
+
+# Integer boundary values for dimension / size / offset fields
+dim_0="\x00\x00\x00\x00"
+dim_16="\x10\x00\x00\x00"
+dim_256="\x00\x01\x00\x00"
+dim_4096="\x00\x10\x00\x00"
+dim_65536="\x00\x00\x01\x00"
+dim_2pow28="\x00\x00\x00\x10"
+dim_2pow29="\x00\x00\x00\x20"
+dim_2pow30="\x00\x00\x00\x40"
+dim_intmax="\xff\xff\xff\x7f"
+dim_neg1="\xff\xff\xff\xff"
+dim_neg16="\xf0\xff\xff\xff"
