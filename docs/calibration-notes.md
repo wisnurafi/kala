@@ -119,3 +119,64 @@ Results:
    192 B against 25.8 GB claimed), made by the human during scoring.
    An automated version of that inference is a possible future
    heuristic, not a classifier bug.
+
+## Phase 3 — campaign orchestration (L3: unattended campaign)
+
+Validation: two local campaigns against bmp_parser — a 6-minute
+demo (2 jobs, 30 s slices) and a 4-minute campaign interrupted by
+SIGINT after one slice and resumed with the same command.
+
+Results:
+
+- Demo: complete, 360/360 s budget, 12 slices, **1,770,897 summed
+  executions**, jobs scaled 2 → 4 by the surge rule, one
+  stagnation merge, 84 oom/timeout artifacts filed as resource
+  events (not crash groups), final report 6 groups.
+- Resume test: SIGINT after slice 1 → exit code 2, `state.json`
+  marked `interrupted` at 30/240 s; re-running the same command
+  consumed the remaining 210 s and completed (852,335 executions,
+  one stagnation merge, final report 8 groups).
+- **Every group in both reports maps to a Phase 1 root cause at a
+  known function** — no phantom groups. The resume campaign even
+  found bug 2 on its own (stack-buffer-overflow @ parse_palette).
+- **Stack hashes are stable across campaigns**: the major groups
+  carry identical hashes in both runs (and match Phase 2's for the
+  classes whose frame sets the Phase 3 parser fix did not change —
+  see lesson 2).
+- New manifestations of known root causes appeared and were
+  classified as ASan reported them: `memcpy-param-overlap` and
+  `unknown-crash`, both at `copy_rows` (wild offsets making the
+  copy's source and destination ranges collide).
+
+### Lessons
+
+1. **A slice is not a duration until you make it one.** The first
+   engine let each job run a single libFuzzer process per slice;
+   the process dies at its first crash in seconds, so a "30 s
+   slice" was an accounting fiction and a 4-minute campaign
+   finished in ~40 s of wall time. Jobs now restart in a loop
+   until the slice's wall-clock budget is spent (the Phase 1
+   restart-loop pattern, productized).
+2. **Parse only the first stack.** ASan reports append "allocated
+   by" / "freed by" stacks after the crash stack; the original
+   frame parser swept them all up, so the same bug hashed
+   differently depending on which buffer overflowed. First-stack-
+   only parsing unified the variants (identical hash `c75583a009ff`
+   for both) — and changed hashes versus Phase 2 for groups whose
+   frame sets had been polluted, which is why hash comparisons are
+   only meaningful within one parser version.
+3. **A negative-offset read wears whatever the heap is wearing.**
+   One artifact reported `heap-use-after-free` at `parse_palette`:
+   the palette pointer walked 906 bytes *before* the input buffer
+   and landed in a freed, ASan-quarantined stdio buffer belonging
+   to libFuzzer itself. Same root cause as bug 5 (unvalidated
+   palette pointer), three possible costumes — overflow, UAF, or
+   SEGV — depending on what precedes the buffer. The toolkit
+   deliberately does not merge UAF into overflow groups; the
+   phenomenon is documented here instead.
+4. **Test harnesses have signal dispositions too.** Two resume
+   tests "failed" because background jobs launched from a
+   non-interactive shell inherit SIGINT as *ignored*, and Python
+   faithfully inherits that. The engine was correct; the test
+   needed `env --default-signal=INT` to reproduce a real Ctrl+C.
+   Check the harness before auditing the product (again).

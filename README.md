@@ -11,12 +11,13 @@ deduplicated, minimized, classified reports.
 
 ## Status
 
-Phase 2 — triage toolkit complete: `kala triage` turns raw crash
-directories into a deduplicated, self-contained HTML report, and its
-L2 validation against the Phase 1 answer key scored 5/5 groups with
-100% group classification (590 raw crashes, byte-identical reports
-across runs). See `docs/calibration-notes.md`. Next is Phase 3,
-campaign orchestration.
+Phase 3 — campaign orchestration complete: `kala run --config
+campaign.yaml` runs unattended parallel campaigns with crash
+harvesting, corpus merging, a metric scheduler, and resume; L3
+validation ran a 6-minute demo campaign (1.77M executions, jobs
+scaled 2→4) and an interrupted-then-resumed campaign, both ending
+in triage reports whose groups all map to Phase 1 root causes.
+See `docs/calibration-notes.md`. Next is Phase 4, hardening.
 
 ## Success levels
 
@@ -115,6 +116,6 @@ grep -rn "windows.h" --include="*.c" --include="*.h" \
 - [x] M0: Repo scaffold + hello-world harness fuzzed (Phase 0)
 - [x] M1: 5/5 planted bugs found in `bmp_parser` (Phase 1) — main gate
 - [x] M2: `kala triage` report matches the planted-bug answer key (Phase 2)
-- [ ] M3: 48h autonomous campaign on a real target (Phase 3)
+- [x] M3: Autonomous campaign runs unattended and resumes (Phase 3) — engine validated locally (demo + interrupt/resume); overnight soak runs as VM QA
 - [ ] M4: CI regression green (Phase 4)
 - [ ] M5: Valid report accepted by a maintainer (Phase 5)
