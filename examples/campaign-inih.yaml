@@ -1,0 +1,21 @@
+# Kala campaign: inih validation (Phase 4 gate).
+# 24 hours clean with rising coverage, or >=1 genuine crash, is the
+# Phase 4 definition of done for the private target. Run with:
+#   ./kala run --config examples/campaign-inih.yaml
+# Interrupt with Ctrl+C and re-run the same command to resume.
+campaign:
+  name: inih-24h
+  target: inih
+  duration_minutes: 1440
+  jobs: 2
+  slice_seconds: 300
+  max_len: 65536
+  seed_corpus: corpus/inih
+  dictionary: harness/dicts/ini.dict
+  output_dir: campaigns
+  triage_on_finish: true
+  symbolize_slices: false
+scheduler:
+  stagnation_intervals: 5
+  surge_threshold_per_hour: 3
+  max_jobs: 4
