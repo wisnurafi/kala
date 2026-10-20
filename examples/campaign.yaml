@@ -1,0 +1,22 @@
+# Kala campaign example: bmp_parser demo.
+# Paths resolve against the repo root. Run with:
+#   ./kala run --config examples/campaign.yaml
+campaign:
+  name: bmp-demo
+  target: bmp_parser
+  duration_minutes: 30
+  jobs: 2
+  slice_seconds: 60
+  max_len: 4096
+  seed_corpus: corpus/bmp
+  dictionary: harness/dicts/bmp.dict
+  output_dir: campaigns
+  triage_on_finish: true
+scheduler:
+  # Merge + reseed the corpus after this many consecutive checks
+  # (one check per slice) with no new unique crash group.
+  stagnation_intervals: 5
+  # Above this many new unique groups per hour, scale jobs up
+  # (capped by max_jobs) — a hot target deserves more CPU.
+  surge_threshold_per_hour: 3
+  max_jobs: 4
