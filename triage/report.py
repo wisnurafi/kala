@@ -11,7 +11,7 @@ single render function keeps the swap trivial if it is ever needed).
 
 import base64
 import html
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .dedup import Group
@@ -36,6 +36,26 @@ code { background: #f0f0f3; padding: 0 0.25rem; }
 
 
 @dataclass
+class StateGroup:
+    """One crash group as recorded in a campaign's state.json.
+
+    Campaign reports reconcile these against the standalone replay:
+    a group whose representative no longer crashes on its own (a
+    heap-layout-dependent or timeout-flavoured find) must stay
+    visible in the report, marked not-reproduced — never silently
+    dropped, which is what happened to 2 of 3 groups in the Phase 3
+    VM QA report.
+    """
+    stack_hash: str
+    bug_class: str
+    direction: str | None
+    top_function: str | None
+    count: int
+    representative: str
+    reproduced: bool
+
+
+@dataclass
 class ReportMeta:
     target: str
     binary_name: str
@@ -43,6 +63,7 @@ class ReportMeta:
     crashing_inputs: int
     non_crashing: int
     symbolized: bool
+    state_groups: list[StateGroup] = field(default_factory=list)
 
 
 def _esc(text: object) -> str:
@@ -100,6 +121,37 @@ def render_report(groups: list[Group], meta: ReportMeta) -> str:
             f"<td><code>{g.stack_hash}</code></td>"
             f"<td>{_poc_link(g)}</td></tr>")
     parts.append("</table>")
+
+    if meta.state_groups:
+        by_hash = {g.stack_hash: i for i, g in enumerate(groups, 1)}
+        parts.append("<h2>Campaign state reconciliation</h2>")
+        parts.append(
+            "<p>Every group the campaign recorded in "
+            "<code>state.json</code>, checked against this standalone "
+            "replay of its representative. A group marked "
+            "<strong>not reproduced</strong> did not crash when "
+            "replayed on its own — typically a heap-layout-dependent "
+            "or timeout-flavoured find. It is kept here, not dropped: "
+            "investigate it from the campaign artifacts before "
+            "dismissing it.</p>")
+        parts.append("<table><tr><th>Stack hash</th><th>Class</th>"
+                     "<th>Location</th><th>Seen in campaign</th>"
+                     "<th>Representative</th><th>Reproduction</th></tr>")
+        for sg in meta.state_groups:
+            if sg.reproduced and sg.stack_hash in by_hash:
+                repro = f"reproduced (G{by_hash[sg.stack_hash]})"
+            elif sg.reproduced:
+                repro = "reproduced"
+            else:
+                repro = "NOT REPRODUCED"
+            parts.append(
+                f"<tr><td><code>{_esc(sg.stack_hash)}</code></td>"
+                f"<td>{_esc(sg.bug_class)}</td>"
+                f"<td>{_esc(sg.top_function or '(unknown)')}</td>"
+                f"<td>{sg.count}</td>"
+                f"<td><code>{_esc(sg.representative)}</code></td>"
+                f"<td>{_esc(repro)}</td></tr>")
+        parts.append("</table>")
 
     for i, g in enumerate(groups, 1):
         rep = g.representative

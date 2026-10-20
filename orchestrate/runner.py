@@ -28,7 +28,7 @@ from pathlib import Path
 from triage.classify import parse_sanitizer_output
 from triage.dedup import AnalyzedCrash, group_crashes, stack_hash
 from triage.ingest import CrashRecord, ingest_dir
-from triage.report import ReportMeta, render_report
+from triage.report import ReportMeta, StateGroup, render_report
 from triage.runner import find_symbolizer, fuzz_env, replay, replay_env
 
 from .config import CampaignConfig
@@ -315,16 +315,36 @@ class Campaign:
         for group in groups:
             group.minimized_path = None  # type: ignore[attr-defined]
             group.minimize_note = "campaign representative"  # type: ignore[attr-defined]
+        # Reconcile against state: every group the campaign recorded
+        # appears in the report, even when its representative does
+        # not reproduce standalone (Phase 3 VM QA lost 2 of 3 groups
+        # this way — they vanished from the report without a trace).
+        reproduced_hashes = {g.stack_hash for g in groups}
+        reproduced_reps = {m.record.path.name
+                           for g in groups for m in g.members}
+        state_groups = [
+            StateGroup(
+                stack_hash=digest,
+                bug_class=g["bug_class"], direction=g["direction"],
+                top_function=g["top_function"], count=g["count"],
+                representative=g["representative"],
+                reproduced=digest in reproduced_hashes
+                or g["representative"] in reproduced_reps)
+            for digest, g in sorted(self.state["groups"].items())]
         meta = ReportMeta(
             target=self.cfg.target, binary_name=self.binary.name,
             total_inputs=len(records),
             crashing_inputs=len(records) - len(non_crashing),
             non_crashing=len(non_crashing),
-            symbolized=any(a.info.symbolized for a in analyzed))
+            symbolized=any(a.info.symbolized for a in analyzed),
+            state_groups=state_groups)
         (self.dir / "report.html").write_text(
             render_report(groups, meta), encoding="utf-8")
+        missing = sum(1 for sg in state_groups if not sg.reproduced)
         self._event("triage", f"report.html written "
-                    f"({len(groups)} groups)")
+                    f"({len(groups)} groups reproduced, "
+                    f"{missing} state group(s) not reproduced)")
+        self._save_state()
 
 
 def _slice_execs(log_path: Path) -> int:
