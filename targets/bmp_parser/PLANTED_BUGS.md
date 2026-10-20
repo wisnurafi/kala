@@ -1,10 +1,10 @@
 # PLANTED_BUGS — answer key for bmp_parser
 
 > **Do not open this file during a triage validation run.** It is the
-> ground truth the Phase 1 (L1) and Phase 2 (L2) validations are scored
+> ground truth the calibration and triage validations are scored
 > against. Every bug below also has a deterministic trigger in
-> `gen_pocs.py` and, once the calibration campaign has run, a
-> fuzzer-found PoC in `corpus/regression/bmp_parser/`.
+> `gen_pocs.py` and a fuzzer-found PoC in
+> `corpus/regression/bmp_parser/`.
 
 All locations are in `bmp_parser.c`.
 

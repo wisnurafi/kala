@@ -2,7 +2,8 @@
 
 Goal: zero to first fuzzing run in under 30 minutes, and a working
 triage + campaign loop right after. Everything below is the exact
-flow used in the Phase 0–4 validation campaigns.
+flow used to validate Kala itself, and the flow every campaign
+follows today.
 
 ## 1. Linux environment
 
@@ -47,7 +48,7 @@ cmake --build --preset fuzzer-asan-ubsan -j
 Presets: `asan` (ASan only), `asan-ubsan`, `fuzzer-asan-ubsan`
 (libFuzzer + ASan/UBSan — the campaign profile). Target code must be
 compiled with `-fsanitize=fuzzer-no-link` when it is linked into a
-libFuzzer binary; without it coverage stays blind (Phase 1 found
+libFuzzer binary; without it coverage stays blind (calibration found
 3 PCs / cov 2 and a 23-second crash hunt that dropped to 0.07 s
 once the flag was right).
 

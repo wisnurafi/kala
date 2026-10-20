@@ -4,7 +4,7 @@
 
 #include "tomlc17.h"
 
-// libFuzzer harness for tomlc17 (Phase 5 public target,
+// libFuzzer harness for tomlc17 (first public target,
 // targets/tomlc17). The library is built with
 // -fsanitize=fuzzer-no-link and upstream default options.
 //

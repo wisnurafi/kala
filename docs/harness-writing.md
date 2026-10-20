@@ -28,14 +28,15 @@ Rules that are not negotiable:
 - **Free what the target allocates** (or deliberately leak-check in
   a separate profile), otherwise LeakSanitizer drowns real crashes
   in leak reports.
-- **No platform APIs.** C11 / C++17 + POSIX only (roadmap §9). No
+- **No platform APIs.** C11 / C++17 + POSIX only (the cross-platform
+  rules in the root README). No
   `windows.h`, no compiler extensions. CI greps for this.
 
 ## Build wiring
 
 - Compile the *target* code with `-fsanitize=fuzzer-no-link` when
   it links into a libFuzzer binary. Skipping this was the single
-  most expensive Phase 1 mistake: the fuzzer ran, but coverage was
+  most expensive calibration mistake: the fuzzer ran, but coverage was
   blind (3 PCs, cov 2) and the planted crash took 23.69 s instead
   of 0.07 s.
 - Build through the CMake presets (`asan`, `asan-ubsan`,
@@ -62,15 +63,15 @@ Rules that are not negotiable:
 - **Dictionary: tokens + boundary values.** Magic bytes and chunk
   names, plus the numbers random mutation will never assemble:
   2^31/2^30-scale dimensions, 0, 255/256/257 for count fields.
-  Phase 1's integer-overflow bug fell to a dictionary boundary
+  The calibration integer-overflow bug fell to a dictionary boundary
   token, not to luck.
 
 ## Before you fuzz: verify by hand
 
 Write deterministic trigger inputs for any bug you *expect* the
 harness to find (planted or suspected) and replay them first.
-Phase 1's generator caught two manifestation surprises before the
-campaign started — an integer overflow that reports SEGV rather
+The calibration generator caught two manifestation surprises before
+the campaign started — an integer overflow that reports SEGV rather
 than a clean heap-buffer-overflow, and a stack overflow that only
 UBSan's bounds check reports under the combined profile. A campaign
 scored against unverified ground truth misclassifies both.

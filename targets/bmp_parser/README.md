@@ -1,4 +1,4 @@
-# bmp_parser — Phase 1 calibration target
+# bmp_parser — calibration target (practice)
 
 A minimal BMP parser in C (BITMAPINFOHEADER layout, 8/16/24/32 bpp,
 BI_RGB and BI_RLE8). It parses well-formed files correctly, and it
@@ -36,5 +36,5 @@ mkdir -p findings-bmp
 ```
 
 Fuzzer-found PoCs for the five classes live in
-`corpus/regression/bmp_parser/` once the calibration campaign has run
-(see `docs/calibration-notes.md`).
+`corpus/regression/bmp_parser/` (found by the calibration campaign;
+see `docs/calibration-notes.md`).

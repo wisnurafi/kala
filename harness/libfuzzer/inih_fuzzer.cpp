@@ -4,7 +4,7 @@
 
 #include "ini.h"
 
-// libFuzzer harness for inih (Phase 4 private target, targets/inih).
+// libFuzzer harness for inih (first real target, targets/inih).
 // The parser is built with -fsanitize=fuzzer-no-link and the heap
 // line-buffer configuration (INI_USE_STACK=0, INI_ALLOW_REALLOC=1).
 //

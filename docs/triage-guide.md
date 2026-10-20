@@ -101,7 +101,7 @@ replays the whole corpus on every push.
 
 ## Known limits
 
-- Input-level purity was 93.4% in Phase 2 validation: two distinct
+- Input-level purity was 93.4% in calibration validation: two distinct
   root causes whose sanitizer evidence is identical group together.
   Only input-structure analysis could separate them; when a group
   looks suspiciously large, split it by hand along input fields.

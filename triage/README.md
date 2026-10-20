@@ -1,4 +1,4 @@
-# triage/ — crash triage pipeline (Phase 2)
+# triage/ — crash triage pipeline
 
 Turns a directory of raw fuzzer crashes into one deduplicated HTML
 report: ingest → replay → classify → dedup → minimize → report.
@@ -43,9 +43,9 @@ every file, not only libFuzzer/AFL++-named artifacts),
 ## Design constraints
 
 - Standard library only — runs on any Python 3.11+ with no install.
-  (The roadmap listed Jinja2 for the report; a single render
-  function in `report.py` keeps that swap trivial, and zero
-  dependencies won for a tool meant to run inside throwaway VMs.)
+  (A template engine was considered for the report; a single
+  render function in `report.py` won — zero dependencies, for a
+  tool meant to run inside throwaway VMs.)
 - Subprocess is always invoked with argument lists, never shells.
 
 ## Tests
@@ -55,5 +55,5 @@ python3 -m unittest discover -s triage/tests -t .
 ```
 
 Unit tests cover the sanitizer-output parser (shapes captured from
-the Phase 1 campaign), excerpt determinism, and the dedup grouping
-rules including the SEGV merge.
+real calibration campaigns), excerpt determinism, and the dedup
+grouping rules including the SEGV merge.

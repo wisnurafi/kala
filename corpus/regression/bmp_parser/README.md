@@ -1,7 +1,7 @@
 # Regression PoCs — bmp_parser
 
-One fuzzer-found proof-of-crash per planted bug class (Phase 1, L1
-calibration). Each file must reproduce its documented sanitizer
+One fuzzer-found proof-of-crash per planted bug class, from the
+calibration campaign that validated the pipeline. Each file must reproduce its documented sanitizer
 report when replayed:
 
 ```sh
@@ -17,5 +17,5 @@ report when replayed:
 | `bug5_oob_palette_offset_fuzz.bmp` | 5 — OOB read via bfOffBits | ASan heap-buffer-overflow READ in `parse_palette` | `bfOffBits` = 1078 in a 189-byte file |
 
 Ground truth: `targets/bmp_parser/PLANTED_BUGS.md`. These files are
-the seed of the Phase 4 regression lab; CI will replay them on every
-push there.
+the seed of the regression lab; `tools/check_regression.py` replays
+them against a fresh build, and CI runs that check on every push.

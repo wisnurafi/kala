@@ -11,7 +11,7 @@ cmake -S . -B build -DKALA_SANITIZER=asan-ubsan
 | None | `none` | — | Plain build, debugging the harness itself |
 | ASan | `asan` | `-fsanitize=address` | Memory corruption: heap/stack buffer overflow, use-after-free, double-free |
 | ASan + UBSan | `asan-ubsan` | `-fsanitize=address,undefined` | Default campaign profile. Adds integer overflow, null deref, misaligned access and other UB |
-| MSan | `msan` | `-fsanitize=memory` | Later phase. Uninitialized-memory reads; clang/Linux only, needs an instrumented libc++ for clean results |
+| MSan | `msan` | `-fsanitize=memory` | Uninitialized-memory reads; clang/Linux only, needs an instrumented libc++ for clean results. Not part of the default campaign profile |
 
 All profiles add `-fno-omit-frame-pointer -g` so ASan stack traces carry
 usable function names for triage.

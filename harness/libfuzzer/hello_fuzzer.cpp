@@ -3,7 +3,7 @@
 
 #include "hello_parse.h"
 
-// libFuzzer entry point for the Phase 0 hello-world target.
+// libFuzzer entry point for the hello-world smoke-test target.
 // Build: clang++ -fsanitize=fuzzer,address (see README / root CMake).
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
   // Guard: cap input size so one pathological input cannot stall the

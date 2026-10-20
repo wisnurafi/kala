@@ -1,4 +1,4 @@
-# inih — first real (private) target, Phase 4
+# inih — first real target (private validation)
 
 Vendored snapshot of [benhoyt/inih](https://github.com/benhoyt/inih),
 a small INI file parser in C (`ini.c` + `ini.h`, "a couple of pages
@@ -41,7 +41,7 @@ Seeds: `corpus/inih/` (hand-written valid files covering sections,
 comments, multi-line values, `name: value`, quoted values, BOM).
 Dictionary: `harness/dicts/ini.dict`.
 
-## Validation bar (Phase 4 definition of done)
+## Validation
 
 `kala run` finds ≥1 genuine crash, **or** a 24-hour clean campaign
 with rising coverage, documented in `docs/calibration-notes.md`.

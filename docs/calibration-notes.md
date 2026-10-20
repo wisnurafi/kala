@@ -1,5 +1,13 @@
 # Calibration notes
 
+> This file is Kala's development and calibration log — the
+> historical record of how each component was built and validated,
+> written per phase while the numbers were fresh. The toolkit it
+> describes is complete and in operation; this log is kept because
+> the lessons in it are load-bearing (several are hard rules in
+> `CONTRIBUTING.md` now).
+
+
 Lessons from validating the pipeline against targets whose ground
 truth is known. Written per phase, immediately after the campaign,
 while the numbers are still fresh.

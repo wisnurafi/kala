@@ -1,7 +1,7 @@
-# orchestrate/ — campaign orchestration (Phase 3)
+# orchestrate/ — campaign orchestration
 
 Runs fuzzing campaigns unattended: parallel libFuzzer jobs in time
-slices, automatic crash harvesting and dedup (via the Phase 2 triage
+slices, automatic crash harvesting and dedup (via the triage
 pipeline), corpus sharing and merging, a metric-driven scheduler,
 persistent state with resume, and a triage report when the time
 budget is consumed.

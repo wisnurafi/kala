@@ -1,4 +1,4 @@
-# tomlc17 — first public target, Phase 5
+# tomlc17 — first public target
 
 Vendored snapshot of [cktan/tomlc17](https://github.com/cktan/tomlc17),
 a lightweight, strictly compliant TOML v1.1 parser for C and C++
@@ -60,13 +60,13 @@ scalar type, dotted/quoted keys, nested and array tables, all four
 string forms, inline tables, datetimes).
 Dictionary: `harness/dicts/toml.dict`.
 
-## Validation bar (Phase 5, milestone M5)
+## The hunt
 
 `kala run` with `examples/campaign-tomlc17.yaml` (48 hours,
 resumable) finds ≥1 genuine crash, **or** the campaign completes
 clean with rising coverage. A crash is verified by hand (clean
 reproduction on a fresh build, root cause, harness artifact ruled
 out), minimized, and disclosed per the SOP above — its PoC does
-**not** enter this repo while unpatched. Definition of done for M5
-is one valid report accepted by the maintainer; a CVE is the
+**not** enter this repo while unpatched. The hunt succeeds when
+one valid report is accepted by the maintainer; a CVE is the
 jackpot, not a requirement.

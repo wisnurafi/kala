@@ -1,8 +1,8 @@
 # Responsible disclosure
 
 The procedure Kala findings follow when the target is someone
-else's code. This is the foundation of Phase 5 (public targets);
-Phase 4's private target follows the same rules as a rehearsal.
+else's code. Every real target — private or public — follows
+these rules, no exceptions.
 
 ## Rules of engagement
 
@@ -103,6 +103,6 @@ happy to coordinate an earlier date with a release. Contact: ...
   fixed release. This is the L5 evidence.
 - Update the findings log: status closed, CVE if any, links.
 - If the campaign was clean instead — no crash in the full run —
-  that is also a Phase 5 outcome: document the coverage reached,
+  that is also a valid outcome: document the coverage reached,
   duration, and corpus state, and move on. A well-run clean
   campaign is a result, not a failure.
