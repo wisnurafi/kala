@@ -11,8 +11,10 @@ deduplicated, minimized, classified reports.
 
 ## Status
 
-Phase 0 — environment and hello-world fuzzing. The pipeline has not been
-calibrated yet; that is Phase 1 (see Roadmap).
+Phase 1 — calibration complete: the `bmp_parser` practice target's five
+planted bug classes were all found by the fuzzer (L1), each with a PoC
+in `corpus/regression/bmp_parser/`. See `docs/calibration-notes.md`.
+Next is Phase 2, the triage toolkit.
 
 ## Success levels
 
@@ -108,8 +110,8 @@ grep -rn "windows.h" --include="*.c" --include="*.h" \
 
 ## Roadmap
 
-- [ ] M0: Repo scaffold + hello-world harness fuzzed (Phase 0)
-- [ ] M1: 5/5 planted bugs found in `bmp_parser` (Phase 1) — main gate
+- [x] M0: Repo scaffold + hello-world harness fuzzed (Phase 0)
+- [x] M1: 5/5 planted bugs found in `bmp_parser` (Phase 1) — main gate
 - [ ] M2: `kala triage` report matches the planted-bug answer key (Phase 2)
 - [ ] M3: 48h autonomous campaign on a real target (Phase 3)
 - [ ] M4: CI regression green (Phase 4)
