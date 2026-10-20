@@ -52,7 +52,10 @@ class Group:
 
 
 def stack_hash(info: CrashInfo) -> str:
-    funcs = [fr.function for fr in info.app_frames[:4]]
+    # Normalized frames: inline accessor helpers (get_u32le & friends)
+    # are skipped so the hash survives compiler inlining differences
+    # between machines — see triage.classify._INLINE_HELPERS.
+    funcs = [fr.function for fr in info.normalized_frames[:4]]
     norm = "|".join([info.bug_class, info.direction or "-",
                      *[f or "?" for f in funcs]])
     return hashlib.sha256(norm.encode()).hexdigest()[:12]

@@ -6,7 +6,16 @@ from pathlib import Path
 from triage.classify import parse_sanitizer_output
 from triage.dedup import AnalyzedCrash, group_crashes, stack_hash
 from triage.ingest import CrashRecord
-from triage.tests.test_classify import HBO_READ, SEGV_WRITE, UAF_WRITE
+from triage.tests.test_classify import (HBO_READ, INLINE_HELPER,
+                                        SEGV_WRITE, UAF_WRITE)
+
+HBO_PALETTE_PLAIN = """\
+==201==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x508000000076
+READ of size 4 at 0x508000000076 thread T0
+    #0 0xbbb in parse_palette /src/targets/bmp_parser/bmp_parser.c:33:16
+    #1 0xccc in bmp_parse /src/targets/bmp_parser/bmp_parser.c:121:3
+SUMMARY: AddressSanitizer: heap-buffer-overflow in parse_palette
+"""
 
 
 def analyzed(name: str, output: str, size: int = 100) -> AnalyzedCrash:
@@ -53,6 +62,16 @@ class TestDedup(unittest.TestCase):
         self.assertEqual(len(groups), 1)
         self.assertEqual(groups[0].bug_class, "heap-buffer-overflow")
         self.assertIn("SEGV-unknown", groups[0].merged_classes)
+
+    def test_inline_helper_variant_hashes_and_groups_the_same(self):
+        # Same crash, two symbolizer attributions (helper inlined or
+        # not): one group, one hash.
+        a = analyzed("crash-a", INLINE_HELPER)
+        b = analyzed("crash-b", HBO_PALETTE_PLAIN)
+        self.assertEqual(stack_hash(a.info), stack_hash(b.info))
+        groups, _ = group_crashes([a, b])
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0].top_function, "parse_palette")
 
     def test_stack_hash_ignores_line_numbers(self):
         a = analyzed("crash-a", HBO_READ)

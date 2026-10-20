@@ -46,6 +46,15 @@ bounds for type 'uint32_t[256]' (aka 'unsigned int[256]')
 SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /src/x.c:33:5
 """
 
+INLINE_HELPER = """\
+==105==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x508000000076
+READ of size 4 at 0x508000000076 thread T0
+    #0 0xaaa in get_u32le /src/targets/bmp_parser/bmp_parser.c:22:10
+    #1 0xbbb in parse_palette /src/targets/bmp_parser/bmp_parser.c:33:16
+    #2 0xccc in bmp_parse /src/targets/bmp_parser/bmp_parser.c:121:3
+SUMMARY: AddressSanitizer: heap-buffer-overflow in get_u32le
+"""
+
 UNSYMBOLIZED = """\
 ==104==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x50f0000001d3
 READ of size 16 at 0x50f0000001d3 thread T0
@@ -118,6 +127,17 @@ allocated by thread T0 here:
         self.assertEqual(info.location.function, "copy_rows")
         funcs = [fr.function for fr in info.app_frames]
         self.assertNotIn("parse_palette", funcs)
+
+    def test_inline_helper_frame_is_not_the_location(self):
+        # clang 21 + llvm-symbolizer can attribute the palette read
+        # to the inlined accessor instead of its caller; the caller
+        # is the root-cause location either way.
+        info = parse_sanitizer_output(INLINE_HELPER, exit_code=1)
+        self.assertEqual(info.location.function, "parse_palette")
+        funcs = [fr.function for fr in info.normalized_frames]
+        self.assertNotIn("get_u32le", funcs)
+        # The raw frames are untouched — normalization is a view.
+        self.assertEqual(info.app_frames[0].function, "get_u32le")
 
     def test_no_crash(self):
         info = parse_sanitizer_output("parsed ok\n", exit_code=0)

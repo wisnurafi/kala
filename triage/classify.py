@@ -27,6 +27,17 @@ _RUNTIME_FILE_HINTS = (
     "sanitizer_common", "ubsan",
 )
 
+# Small static helpers that compilers inline into their callers.
+# Whether llvm-symbolizer attributes a crash to the helper or to its
+# caller depends on inlining decisions that vary between compilers
+# and versions (observed: clang 18 attributes a palette read to
+# parse_palette, clang 21 can attribute the same read to get_u32le).
+# These names are accessors, never root causes: location and stack
+# hash use the first frame that is not one of them.
+_INLINE_HELPERS = frozenset({
+    "get_u16le", "get_u32le", "get_i32le",
+})
+
 _ASAN_HEADER = re.compile(r"ERROR: AddressSanitizer: ([a-z][a-zA-Z-]*)")
 _ASAN_ATTEMPT = re.compile(r"ERROR: AddressSanitizer: attempting ([a-z-]+)")
 _ASAN_SEGV = re.compile(r"ERROR: AddressSanitizer: SEGV on unknown address")
@@ -71,8 +82,23 @@ class CrashInfo:
         return out
 
     @property
-    def location(self) -> Frame | None:
+    def normalized_frames(self) -> list[Frame]:
+        """Application frames with leading inline helpers skipped.
+
+        See _INLINE_HELPERS: the same crash must yield the same
+        location and stack hash regardless of how the compiler
+        inlined an accessor into its caller. If every frame is a
+        helper, the last one is kept so location is never lost.
+        """
         app = self.app_frames
+        i = 0
+        while i < len(app) - 1 and app[i].function in _INLINE_HELPERS:
+            i += 1
+        return app[i:]
+
+    @property
+    def location(self) -> Frame | None:
+        app = self.normalized_frames
         return app[0] if app else None
 
     @property
