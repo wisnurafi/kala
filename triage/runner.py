@@ -49,6 +49,44 @@ def replay_env(symbolizer: str | None) -> dict[str, str]:
     return env
 
 
+def _set_option(opts: str, key: str, value: str) -> str:
+    parts = [p for p in opts.split(":") if p and not p.startswith(key + "=")]
+    parts.append(f"{key}={value}")
+    return ":".join(parts)
+
+
+def _drop_option(opts: str, key: str) -> str:
+    return ":".join(p for p in opts.split(":")
+                    if p and not p.startswith(key + "="))
+
+
+def fuzz_env(base: dict[str, str] | None = None) -> dict[str, str]:
+    """Environment for fuzzing itself: symbolization OFF.
+
+    Symbolizing a crash spawns an external symbolizer process per
+    report. During a campaign slice that cost is pure waste — the
+    artifact on disk is what matters, and harvest/triage replay it
+    later with replay_env() and full traces. On a small VM the
+    per-crash symbolizer spawn measurably throttles execution
+    throughput (Phase 3 QA observation), so slices run with
+    ASan symbolize=0, no external symbolizer, and UBSan stack
+    traces off. Crash detection itself is unaffected.
+    """
+    env = dict(base) if base is not None else replay_env(None)
+    asan = env.get("ASAN_OPTIONS", "")
+    asan = _drop_option(asan, "external_symbolizer_path")
+    asan = _set_option(asan, "symbolize", "0")
+    if "abort_on_error" not in asan:
+        asan = _set_option(asan, "abort_on_error", "1")
+    env["ASAN_OPTIONS"] = asan
+    ubsan = env.get("UBSAN_OPTIONS", "")
+    ubsan = _set_option(ubsan, "print_stacktrace", "0")
+    if "halt_on_error" not in ubsan:
+        ubsan = _set_option(ubsan, "halt_on_error", "1")
+    env["UBSAN_OPTIONS"] = ubsan
+    return env
+
+
 @dataclass
 class ReplayResult:
     exit_code: int

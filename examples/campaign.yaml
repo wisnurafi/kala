@@ -12,6 +12,10 @@ campaign:
   dictionary: harness/dicts/bmp.dict
   output_dir: campaigns
   triage_on_finish: true
+  # Keep false for real campaigns: symbolizing crashes mid-slice
+  # spawns a symbolizer process per crash and throttles throughput.
+  # Harvest/triage always replay with full symbolization.
+  symbolize_slices: false
 scheduler:
   # Merge + reseed the corpus after this many consecutive checks
   # (one check per slice) with no new unique crash group.

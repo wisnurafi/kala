@@ -28,6 +28,11 @@ class CampaignConfig:
     dictionary: str | None = "harness/dicts/bmp.dict"
     output_dir: str = "campaigns"
     triage_on_finish: bool = True
+    # Symbolizing every crash during a slice spawns a symbolizer
+    # process per report and throttles throughput on small VMs;
+    # harvest/triage replay with full symbolization anyway. Turn
+    # this on only to debug a campaign live.
+    symbolize_slices: bool = False
     # scheduler
     stagnation_intervals: int = 5
     surge_threshold_per_hour: float = 3.0

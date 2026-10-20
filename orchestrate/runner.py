@@ -29,7 +29,7 @@ from triage.classify import parse_sanitizer_output
 from triage.dedup import AnalyzedCrash, group_crashes, stack_hash
 from triage.ingest import CrashRecord, ingest_dir
 from triage.report import ReportMeta, render_report
-from triage.runner import find_symbolizer, replay, replay_env
+from triage.runner import find_symbolizer, fuzz_env, replay, replay_env
 
 from .config import CampaignConfig
 from .scheduler import Metrics, decide
@@ -48,6 +48,11 @@ class Campaign:
         self.state_path = self.dir / "state.json"
         self.symbolizer = find_symbolizer()
         self.env = replay_env(self.symbolizer)
+        # Slices fuzz with symbolization off (see triage.runner
+        # .fuzz_env); harvest and triage replay through self.env
+        # and get full traces. Config can opt back in for debugging.
+        self.fuzz_env = self.env if cfg.symbolize_slices \
+            else fuzz_env(self.env)
         self.state = self._load_or_init_state()
 
     # -- state ------------------------------------------------------
@@ -134,7 +139,7 @@ class Campaign:
                 try:
                     subprocess.run(
                         cmd, stdout=log_file,
-                        stderr=subprocess.STDOUT, env=self.env,
+                        stderr=subprocess.STDOUT, env=self.fuzz_env,
                         timeout=remaining + 30)
                 except subprocess.TimeoutExpired:
                     pass
@@ -229,7 +234,7 @@ class Campaign:
             inputs.append(str(corpus))
         subprocess.run([str(self.binary), "-merge=1", str(merged),
                         *inputs], capture_output=True, text=True,
-                       env=self.env, timeout=300)
+                       env=self.fuzz_env, timeout=300)
         shutil.rmtree(self.shared)
         merged.replace(self.shared)
         self.state["merges"] += 1
