@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Mondays 03:17 UTC — the fuzz-smoke job runs on this trigger.
+    - cron: "17 3 * * 1"
+
+jobs:
+  build-test-regress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm cmake python3
+
+      - name: Portability check (roadmap section 9 — no Windows API)
+        run: |
+          if grep -rn "windows\.h" --include="*.c" --include="*.h" \
+              --include="*.cpp" --include="*.hpp" .; then
+            echo "windows.h found in the tree" >&2
+            exit 1
+          fi
+
+      - name: Configure (fuzzer preset)
+        run: cmake --preset fuzzer-asan-ubsan
+
+      - name: Build
+        run: cmake --build --preset fuzzer-asan-ubsan -j
+
+      - name: Python unit tests
+        run: |
+          python3 -m unittest discover -s triage/tests -t .
+          python3 -m unittest discover -s orchestrate/tests -t .
+
+      - name: Regression replay (every PoC must crash as documented)
+        run: python3 tools/check_regression.py
+
+  fuzz-smoke:
+    # Weekly scheduled fuzzing of the practice target (roadmap
+    # Phase 4): two minutes of libFuzzer, then automatic triage of
+    # whatever it found. Runs on schedule / manual dispatch only —
+    # per-push CI stays fast and deterministic.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm cmake python3
+
+      - name: Build
+        run: |
+          cmake --preset fuzzer-asan-ubsan
+          cmake --build --preset fuzzer-asan-ubsan -j
+
+      - name: Fuzz bmp_parser for 120s
+        run: |
+          mkdir -p findings-smoke
+          ./build-fuzzer/harness/libfuzzer/bmp_fuzzer findings-smoke corpus/bmp \
+            -dict=harness/dicts/bmp.dict -max_total_time=120 -max_len=4096 || true
+          ls -la findings-smoke
+
+      - name: Triage findings (if any)
+        run: |
+          if ls findings-smoke/crash-* >/dev/null 2>&1; then
+            ./kala triage findings-smoke --target bmp_parser \
+              --out report-smoke.html --minimize-time 0
+          else
+            echo "no crashes this week"
+          fi
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-smoke-findings
+          path: |
+            findings-smoke/
+            report-smoke.html
+          if-no-files-found: ignore
