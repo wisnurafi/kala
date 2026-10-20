@@ -3,9 +3,11 @@
 Practice targets live here — parsers written for Kala, with bugs planted
 on purpose so the pipeline can be calibrated honestly.
 
-## Phase 1: bmp_parser
+## bmp_parser (Phase 1, done)
 
-A minimal BMP parser in C with 5 planted bug classes:
+`bmp_parser/` — a minimal BMP parser in C with 5 planted bug classes,
+calibrated 5/5 by the fuzzer (see `docs/calibration-notes.md` and
+`corpus/regression/bmp_parser/`):
 
 1. Heap buffer overflow
 2. Stack buffer overflow

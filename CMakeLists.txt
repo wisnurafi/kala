@@ -41,4 +41,5 @@ option(KALA_ENABLE_LIBFUZZER "Build libFuzzer harnesses (requires clang)" OFF)
 
 add_compile_options(-Wall -Wextra)
 
+add_subdirectory(targets)
 add_subdirectory(harness/libfuzzer)
