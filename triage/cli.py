@@ -30,6 +30,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_BINARIES = {
     "bmp_parser": "build-fuzzer/harness/libfuzzer/bmp_fuzzer",
     "hello": "build-fuzzer/harness/libfuzzer/hello_fuzzer",
+    "inih": "build-fuzzer/harness/libfuzzer/inih_fuzzer",
 }
 
 
