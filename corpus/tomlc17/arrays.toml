@@ -1,0 +1,20 @@
+# Arrays seed: flat, nested, mixed, arrays of tables
+ports = [8080, 8181, 8282]
+names = ["alpha", "beta", "gamma"]
+mixed = [1, "two", 3.0, true]
+nested = [[1, 2], [3, 4, 5], []]
+matrix = [[1, 0], [0, 1]]
+
+[[products]]
+name = "hammer"
+sku = 738594937
+
+[[products]]
+name = "nail"
+sku = 284758393
+
+[[contributors]]
+name = "first"
+
+[[contributors]]
+name = "second"

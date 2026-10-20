@@ -31,6 +31,7 @@ _DEFAULT_BINARIES = {
     "bmp_parser": "build-fuzzer/harness/libfuzzer/bmp_fuzzer",
     "hello": "build-fuzzer/harness/libfuzzer/hello_fuzzer",
     "inih": "build-fuzzer/harness/libfuzzer/inih_fuzzer",
+    "tomlc17": "build-fuzzer/harness/libfuzzer/tomlc17_fuzzer",
 }
 
 

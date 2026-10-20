@@ -1,0 +1,68 @@
+# Dictionary for TOML targets (libFuzzer -dict format).
+# Structural tokens of the TOML grammar first, then the literal
+# forms and boundary values that stress the scanner: numbers at the
+# int64 edges, datetime punctuation, string escapes and nesting
+# runs around the scanner's bracket/brace caps (30).
+# Non-printable bytes use \xNN only: libFuzzer's dictionary parser
+# rejects \r, \n and \t escapes (Phase 4 lesson).
+
+equals="="
+dot="."
+comma=","
+hash="#"
+lbracket="["
+rbracket="]"
+dbracket_open="[["
+dbracket_close="]]"
+lbrace="{"
+rbrace="}"
+dquote="\""
+squote="'"
+triple_dquote="\"\"\""
+triple_squote="'''"
+space=" "
+tab="\x09"
+crlf="\x0d\x0a"
+newline="\x0a"
+bom="\xef\xbb\xbf"
+backslash="\\"
+
+true_kw="true"
+false_kw="false"
+inf_kw="inf"
+nan_kw="nan"
+plus_inf="+inf"
+minus_inf="-inf"
+underscore_num="1_000_000"
+hex_prefix="0x"
+oct_prefix="0o"
+bin_prefix="0b"
+exp="e+22"
+int64_max="9223372036854775807"
+int64_min="-9223372036854775808"
+int64_over="9223372036854775808"
+hex_big="0xDEADBEEF"
+datetime_sep="T"
+tz_zulu="Z"
+tz_offset="+07:00"
+date_ymd="1979-05-27"
+time_hms="07:32:00"
+frac_sec=".999999"
+esc_unicode4="\\u00e9"
+esc_unicode8="\\U0001F600"
+esc_tab="\\t"
+esc_newline="\\n"
+esc_quote="\\\""
+
+dotted_key="a.b.c"
+quoted_key="\"quoted key\""
+header="[server]"
+arr_header="[[products]]"
+nested_header="[a.b.c]"
+
+# Nesting runs: at, and one past, the scanner caps (30)
+brackets_30="[[[[[[[[[[[[[[[[[[[[[[[[[[[[[["
+brackets_31="[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[["
+braces_30="{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{"
+braces_31="{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{"
+dotted_long="a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a"

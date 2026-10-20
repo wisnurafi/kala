@@ -1,0 +1,21 @@
+# Tables seed: dotted/quoted keys at top level, then headers
+plain.dotted.key = "dotted at top level"
+"quoted key" = "value"
+'apostrophe key' = 42
+
+[server]
+host = "example.com"
+port = 8080
+
+[server.tls]
+enabled = true
+cert = "/tmp/cert.pem"
+
+[a.b.c]
+deep = "nested"
+
+[fruit.apple]
+color = "red"
+
+[fruit.orange]
+color = "orange"

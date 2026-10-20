@@ -1,0 +1,8 @@
+# Inline tables and datetimes seed
+point = {x = 1, y = 2}
+person = {name = "Tom", age = 30, tags = ["a", "b"]}
+nested = {outer = {inner = {leaf = true}}, list = [{a = 1}, {a = 2}]}
+moment = 1979-05-27 07:32:00.999999
+local_date = 2024-02-29
+local_time = 23:59:59
+offset_dt = 1979-05-27T00:32:00+07:00

@@ -1,0 +1,16 @@
+# Basic TOML seed: scalars of every type
+title = "Kala seed config"
+version = 1
+pi = 3.14159
+debug = true
+released = 1979-05-27
+alarm = 07:32:00
+stamp = 1979-05-27T07:32:00Z
+big = 9223372036854775807
+hexed = 0xDEADBEEF
+octal = 0o755
+binary = 0b11010110
+grouped = 1_000_000
+sci = 5e+22
+notanumber = nan
+infinite = inf
