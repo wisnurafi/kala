@@ -5,6 +5,9 @@
                 [--minimize-time 10] [--timeout 10] [--all]
     kala run --config examples/campaign.yaml [--bin PATH]
     kala status [--config examples/campaign.yaml | <campaign-dir>]
+    kala regress <poc> --target bmp_parser --name bugN_name
+                --expect-class <class> [--expect-function <fn>]
+                --bug "..." --expected "..." --trigger "..."
 
 `triage` is Phase 2; `run`/`status` drive Phase 3 campaigns.
 
@@ -112,6 +115,35 @@ def cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_regress(args: argparse.Namespace) -> int:
+    from .regress import RegressError, add_regression_poc
+
+    binary = _resolve_binary(args.target, args.bin)
+    if not binary.is_file():
+        raise SystemExit(
+            f"target binary not found: {binary}\n"
+            "Build it first, e.g.: cmake --preset fuzzer-asan-ubsan && "
+            "cmake --build --preset fuzzer-asan-ubsan")
+    symbolizer = find_symbolizer()
+    env = replay_env(symbolizer)
+    regression_dir = _REPO_ROOT / "corpus" / "regression" / args.target
+    try:
+        dest = add_regression_poc(
+            binary, Path(args.poc), regression_dir, name=args.name,
+            expect_class=args.expect_class,
+            expect_function=args.expect_function, bug=args.bug,
+            expected=args.expected, trigger=args.trigger, env=env,
+            timeout=args.timeout, force=args.force)
+    except RegressError as exc:
+        raise SystemExit(f"regress: {exc}") from exc
+    print(f"added {dest.relative_to(_REPO_ROOT)} "
+          f"(verified: {args.expect_class}"
+          f"{' @ ' + args.expect_function if args.expect_function else ''})")
+    print("README table updated — remember to register the PoC in "
+          "tools/check_regression.py so CI replays it")
+    return 0
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     from orchestrate.config import load_config
     from orchestrate.runner import Campaign
@@ -154,7 +186,8 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] not in ("triage", "run", "status", "-h", "--help"):
+    if argv and argv[0] not in ("triage", "run", "status", "regress",
+                                "-h", "--help"):
         argv.insert(0, "triage")  # `kala <crash-dir>` convenience
     parser = argparse.ArgumentParser(
         prog="kala", description="Kala vulnerability discovery toolkit")
@@ -164,6 +197,31 @@ def main(argv: list[str] | None = None) -> int:
                    help="campaign YAML config (e.g. examples/campaign.yaml)")
     r.add_argument("--bin", default=None,
                    help="path to the instrumented target binary")
+    g = sub.add_parser("regress",
+                       help="promote a verified PoC into "
+                            "corpus/regression/<target>/")
+    g.add_argument("poc", help="the crash input to promote")
+    g.add_argument("--target", default="bmp_parser",
+                   help="target name (default: bmp_parser)")
+    g.add_argument("--bin", default=None,
+                   help="path to the instrumented target binary")
+    g.add_argument("--name", required=True,
+                   help="file stem for the PoC, e.g. bug6_oob_example")
+    g.add_argument("--expect-class", required=True,
+                   help="bug class the replay must prove, "
+                        "e.g. heap-buffer-overflow")
+    g.add_argument("--expect-function", default=None,
+                   help="top application function the replay must show")
+    g.add_argument("--bug", required=True,
+                   help="README 'Bug' cell, e.g. '6 — OOB read, example'")
+    g.add_argument("--expected", required=True,
+                   help="README 'Expected report' cell")
+    g.add_argument("--trigger", required=True,
+                   help="README 'Trigger' cell, one line")
+    g.add_argument("--timeout", type=float, default=15,
+                   help="replay timeout in seconds (default: 15)")
+    g.add_argument("--force", action="store_true",
+                   help="replace an existing file with the same name")
     s = sub.add_parser("status", help="show campaign status")
     s.add_argument("campaign", nargs="?", default=None,
                    help="campaign directory (or use --config)")
@@ -191,6 +249,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_triage(args)
     if args.command == "run":
         return cmd_run(args)
+    if args.command == "regress":
+        return cmd_regress(args)
     if args.command == "status":
         return cmd_status(args)
     parser.print_help()
