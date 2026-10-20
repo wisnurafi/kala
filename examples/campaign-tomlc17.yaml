@@ -1,0 +1,25 @@
+# Kala campaign: tomlc17 public hunt (Phase 5, milestone M5).
+# 48 hours, resumable, on the fuzzing VM. A genuine crash or a
+# complete clean run closes the hunt; findings follow
+# docs/responsible-disclosure.md and unpatched PoCs never enter the
+# repo. Run with:
+#   ./kala run --config examples/campaign-tomlc17.yaml
+# Interrupt with Ctrl+C and re-run the same command to resume.
+# Do not run full-jobs alongside the inih 24h campaign on the same
+# VM (CPU contention skews both).
+campaign:
+  name: tomlc17-48h
+  target: tomlc17
+  duration_minutes: 2880
+  jobs: 2
+  slice_seconds: 300
+  max_len: 65536
+  seed_corpus: corpus/tomlc17
+  dictionary: harness/dicts/toml.dict
+  output_dir: campaigns
+  triage_on_finish: true
+  symbolize_slices: false
+scheduler:
+  stagnation_intervals: 5
+  surge_threshold_per_hour: 3
+  max_jobs: 4
