@@ -29,7 +29,8 @@ from triage.classify import parse_sanitizer_output
 from triage.dedup import AnalyzedCrash, group_crashes, stack_hash
 from triage.ingest import CrashRecord, ingest_dir
 from triage.report import ReportMeta, StateGroup, render_report
-from triage.runner import find_symbolizer, fuzz_env, replay, replay_env
+from triage.runner import (find_symbolizer, fuzz_env, replay_classified,
+                           replay_env)
 
 from .config import CampaignConfig
 from .scheduler import Metrics, decide
@@ -186,8 +187,8 @@ class Campaign:
                         self.state.get("artifacts_aux", 0) + 1
                     continue
                 self.state["artifacts_seen"] += 1
-                result = replay(self.binary, art, timeout=15,
-                                env=self.env)
+                result = replay_classified(self.binary, art, timeout=15,
+                                           env=self.env)
                 info = parse_sanitizer_output(
                     result.output, result.exit_code, result.timed_out)
                 if info.kind == "no-crash":
@@ -305,8 +306,8 @@ class Campaign:
         records = ingest_dir(self.crashes, all_files=True)
         analyzed = []
         for record in records:
-            result = replay(self.binary, record.path, timeout=15,
-                            env=self.env)
+            result = replay_classified(self.binary, record.path,
+                                       timeout=15, env=self.env)
             info = parse_sanitizer_output(result.output,
                                           result.exit_code,
                                           result.timed_out)

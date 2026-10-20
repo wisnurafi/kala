@@ -6,9 +6,10 @@ drivers follow closely enough for exit-code purposes.
 
 Symbolization matters: without an external symbolizer ASan prints
 bare addresses and stack-trace triage goes blind (Phase 1 lesson, see
-docs/calibration-notes.md). find_symbolizer() locates llvm-symbolizer
-or falls back to addr2line, and the path is injected into
-ASAN_OPTIONS unless the user already configured one.
+docs/calibration-notes.md). find_symbolizer() locates an external
+symbolizer (addr2line preferred — see _SYMBOLIZER_CANDIDATES) and
+the path is injected into ASAN_OPTIONS unless the user already
+configured one.
 
 Standard library only; subprocess is always called with an argument
 list, never a shell string (roadmap section 9).
@@ -21,9 +22,18 @@ from dataclasses import dataclass
 from pathlib import Path
 
 _SYMBOLIZER_CANDIDATES = (
+    # addr2line first, deliberately. ASan's external-symbolizer
+    # protocol can deadlock against llvm-symbolizer (Phase 4 VM QA,
+    # Ubuntu 26.04 / clang 21: the sanitizer sat at ~0% CPU waiting
+    # on its symbolizer child until the replay timeout killed it,
+    # and two real crashes were classified "timeout"; the same
+    # inputs crash in ~0.1s with symbolize=0 or with addr2line,
+    # fully symbolized). addr2line has proven stable on every
+    # machine this project has run on; llvm-symbolizer remains as
+    # the fallback for systems without binutils.
+    "addr2line",
     "llvm-symbolizer", "llvm-symbolizer-21", "llvm-symbolizer-20",
     "llvm-symbolizer-19", "llvm-symbolizer-18", "llvm-symbolizer-17",
-    "addr2line",
 )
 
 
@@ -125,3 +135,27 @@ def replay(binary: str | Path, crash_file: str | Path, timeout: float,
         except subprocess.TimeoutExpired:
             out, err = "", ""
         return ReplayResult(-1, (out or "") + (err or ""), True)
+
+
+def replay_classified(binary: str | Path, crash_file: str | Path,
+                      timeout: float,
+                      env: dict[str, str] | None = None) -> ReplayResult:
+    """Replay an input in order to classify it, wedged-symbolizer-proof.
+
+    The first attempt uses the caller's (symbolizing) env. If it
+    times out, retry once with fuzz_env() — symbolization off. A
+    stuck external symbolizer otherwise turns a real crash into a
+    spurious "timeout" classification: the sanitizer hangs waiting
+    on the symbolizer child at ~0% CPU, indistinguishable from a
+    genuinely long-running input until the retry. The retry still
+    yields the sanitizer SUMMARY line and the true exit code; only
+    function/line fidelity is reduced. An input that really does
+    run long times out twice and stays a timeout.
+    """
+    if env is None:
+        env = replay_env(find_symbolizer())
+    result = replay(binary, crash_file, timeout=timeout, env=env)
+    if not result.timed_out:
+        return result
+    retry = replay(binary, crash_file, timeout=timeout, env=fuzz_env(env))
+    return retry if not retry.timed_out else result

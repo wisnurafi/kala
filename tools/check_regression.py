@@ -24,7 +24,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from triage.classify import parse_sanitizer_output  # noqa: E402
-from triage.runner import find_symbolizer, replay, replay_env  # noqa: E402
+from triage.runner import (find_symbolizer, replay_classified,  # noqa: E402
+                           replay_env)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -66,7 +67,7 @@ def check_target(target: str, binary: Path, env: dict) -> list[str]:
         if not path.is_file():
             failures.append(f"{target}/{name}: expected PoC is missing")
             continue
-        result = replay(binary, path, timeout=30, env=env)
+        result = replay_classified(binary, path, timeout=30, env=env)
         info = parse_sanitizer_output(result.output, result.exit_code,
                                       result.timed_out)
         if info.kind == "no-crash":

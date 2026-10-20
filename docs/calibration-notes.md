@@ -244,3 +244,22 @@ fuzzing VM, per the Phase 4 definition of done.
    fails. CI installs `libclang-rt-dev` alongside clang — found by
    rebuilding from an empty build directory locally, not by
    reading package descriptions.
+8. VM QA found the external-symbolizer deadlock the container
+   never showed: the VM has llvm-symbolizer installed, the
+   container does not, so `find_symbolizer()` picked different
+   tools per machine. With llvm-symbolizer as ASan's external
+   symbolizer, two regression PoCs (stack palette overflow,
+   integer-overflow SEGV) never produced a report — the sanitizer
+   sat at ~0% CPU waiting on the symbolizer child until the
+   replay timeout classified both as `timeout`. Proof by
+   elimination on the VM: `symbolize=0` crashes in ~0.1s, and
+   forcing `external_symbolizer_path=/usr/bin/addr2line` crashes
+   in ~0.2s fully symbolized. Fix: addr2line is now the preferred
+   candidate, and the new `replay_classified()` retries a timed-
+   out classification replay once with symbolization off, so a
+   wedged symbolizer can never again disguise a real crash as a
+   timeout. Lessons: a "timeout" class means the *replay* timed
+   out, which is a claim about the harness as much as the input;
+   and per-machine tool availability is a calibration variable —
+   the same `shutil.which` probe silently routes different
+   machines down different code paths.

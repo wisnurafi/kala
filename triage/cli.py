@@ -24,7 +24,7 @@ from .dedup import AnalyzedCrash, group_crashes
 from .ingest import ingest_dir
 from .minimize import minimize_crash
 from .report import ReportMeta, render_report
-from .runner import find_symbolizer, replay, replay_env
+from .runner import find_symbolizer, replay_classified, replay_env
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_BINARIES = {
@@ -65,12 +65,13 @@ def cmd_triage(args: argparse.Namespace) -> int:
     symbolizer = find_symbolizer()
     env = replay_env(symbolizer)
     if symbolizer is None:
-        print("warning: no llvm-symbolizer or addr2line in PATH; "
+        print("warning: no addr2line or llvm-symbolizer in PATH; "
               "sanitizer traces will not be symbolized", file=sys.stderr)
 
     analyzed: list[AnalyzedCrash] = []
     for i, record in enumerate(records, 1):
-        result = replay(binary, record.path, timeout=args.timeout, env=env)
+        result = replay_classified(binary, record.path,
+                                   timeout=args.timeout, env=env)
         info = parse_sanitizer_output(result.output, result.exit_code,
                                        result.timed_out)
         analyzed.append(AnalyzedCrash(record=record, info=info))

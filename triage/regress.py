@@ -22,7 +22,7 @@ import shutil
 from pathlib import Path
 
 from .classify import parse_sanitizer_output
-from .runner import replay
+from .runner import replay_classified
 
 
 class RegressError(Exception):
@@ -63,7 +63,7 @@ def add_regression_poc(binary: Path, poc: Path, regression_dir: Path,
     """Verify, copy and document one PoC. Returns the destination."""
     if not poc.is_file():
         raise RegressError(f"PoC not found: {poc}")
-    result = replay(binary, poc, timeout=timeout, env=env)
+    result = replay_classified(binary, poc, timeout=timeout, env=env)
     info = parse_sanitizer_output(result.output, result.exit_code,
                                   result.timed_out)
     if info.kind == "no-crash":
