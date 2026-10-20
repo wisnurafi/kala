@@ -52,3 +52,6 @@ Thumbs.db
 
 # Triage scratch output
 triage-work/
+
+# Campaign output
+campaigns/

@@ -3,9 +3,10 @@
     kala triage <crash-dir> --target bmp_parser [--bin PATH]
                 [--out report.html] [--work-dir triage-work]
                 [--minimize-time 10] [--timeout 10] [--all]
+    kala run --config examples/campaign.yaml [--bin PATH]
+    kala status [--config examples/campaign.yaml | <campaign-dir>]
 
-Phase 2 ships `triage`; the subcommand layout leaves room for the
-Phase 3 `run` (campaign orchestration) without reshaping the CLI.
+`triage` is Phase 2; `run`/`status` drive Phase 3 campaigns.
 
 Standard library only; paths via pathlib, subprocess via argument
 lists (roadmap section 9).
@@ -111,13 +112,63 @@ def cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run(args: argparse.Namespace) -> int:
+    from orchestrate.config import load_config
+    from orchestrate.runner import Campaign
+
+    cfg_path = Path(args.config)
+    if not cfg_path.is_file() and (_REPO_ROOT / args.config).is_file():
+        cfg_path = _REPO_ROOT / args.config
+    try:
+        cfg = load_config(cfg_path)
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"config error: {exc}") from exc
+    binary = _resolve_binary(cfg.target, args.bin or cfg.binary)
+    if not binary.is_file():
+        raise SystemExit(
+            f"target binary not found: {binary}\n"
+            "Build it first, e.g.: cmake --preset fuzzer-asan-ubsan && "
+            "cmake --build --preset fuzzer-asan-ubsan")
+    return Campaign(cfg, _REPO_ROOT, binary).run()
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    from orchestrate.runner import load_state
+    from orchestrate.status import render_status
+
+    if args.config:
+        from orchestrate.config import load_config
+        cfg_path = Path(args.config)
+        if not cfg_path.is_file() and (_REPO_ROOT / args.config).is_file():
+            cfg_path = _REPO_ROOT / args.config
+        cfg = load_config(cfg_path)
+        campaign_dir = _REPO_ROOT / cfg.output_dir / cfg.name
+    else:
+        campaign_dir = Path(args.campaign)
+    state = load_state(campaign_dir)
+    if state is None:
+        raise SystemExit(f"no campaign state in {campaign_dir}")
+    print(render_status(state), end="")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] not in ("triage", "-h", "--help"):
+    if argv and argv[0] not in ("triage", "run", "status", "-h", "--help"):
         argv.insert(0, "triage")  # `kala <crash-dir>` convenience
     parser = argparse.ArgumentParser(
         prog="kala", description="Kala vulnerability discovery toolkit")
     sub = parser.add_subparsers(dest="command")
+    r = sub.add_parser("run", help="run or resume a fuzzing campaign")
+    r.add_argument("--config", required=True,
+                   help="campaign YAML config (e.g. examples/campaign.yaml)")
+    r.add_argument("--bin", default=None,
+                   help="path to the instrumented target binary")
+    s = sub.add_parser("status", help="show campaign status")
+    s.add_argument("campaign", nargs="?", default=None,
+                   help="campaign directory (or use --config)")
+    s.add_argument("--config", default=None,
+                   help="campaign YAML config to locate the campaign")
     t = sub.add_parser("triage", help="triage a directory of raw crashes")
     t.add_argument("crash_dir", help="directory of fuzzer crash artifacts")
     t.add_argument("--target", default="bmp_parser",
@@ -138,6 +189,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "triage":
         return cmd_triage(args)
+    if args.command == "run":
+        return cmd_run(args)
+    if args.command == "status":
+        return cmd_status(args)
     parser.print_help()
     return 2
 

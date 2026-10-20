@@ -12,4 +12,4 @@ requires-python = ">=3.11"
 kala = "triage.cli:main"
 
 [tool.setuptools]
-packages = ["triage"]
+packages = ["triage", "orchestrate"]
