@@ -1,0 +1,4 @@
+# Dictionary for the hello-world target (libFuzzer -dict format).
+magic_fuzz="FUZZ"
+magic_kala="KALA"
+kw_hello="hello"

@@ -1,0 +1,15 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+// Dummy parser for the Phase 0 hello-world harness.
+//
+// Returns 0 for every input it rejects or handles cleanly. One specific
+// magic pattern reaches an intentionally planted heap-buffer-overflow so
+// the fuzzing loop can be calibrated end to end: fuzzer finds the pattern,
+// ASan reports the bug, a crash artifact is written.
+//
+// This is a training target, not a real parser. The real calibrated
+// target (bmp_parser, 5 planted bug classes) is Phase 1.
+int kala_hello_parse(const uint8_t *data, size_t size);

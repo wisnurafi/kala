@@ -1,0 +1,51 @@
+# Build output
+build/
+build-*/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+
+# Fuzzer output — never commit raw findings
+crash-*
+leak-*
+oom-*
+timeout-*
+crashes/
+findings/
+fuzz-*.log
+*.profdata
+*.profraw
+
+# Generated corpus (seed corpus under corpus/hello/ and corpus/regression/
+# is committed on purpose; anything produced by a campaign is not)
+corpus/generated/
+corpus/fuzzing/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+report.html
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Local secrets / env
+.env
+*.local
