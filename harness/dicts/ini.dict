@@ -12,10 +12,10 @@ hash="#"
 quote="\""
 single_quote="'"
 bom="\xef\xbb\xbf"
-crlf="\r\n"
-continuation="\\\n"
+crlf="\x0d\x0a"
+continuation="\\\x0a"
 space=" "
-tab="\t"
+tab="\x09"
 
 # Section/name length boundaries (INI_MAX_SECTION / INI_MAX_NAME = 50)
 name_49="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
